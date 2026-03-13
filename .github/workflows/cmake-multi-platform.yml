@@ -8,66 +8,34 @@ on:
 
 jobs:
   build:
-    runs-on: ${{ matrix.os }}
-
     strategy:
       fail-fast: false
-
       matrix:
-        os: [ubuntu-latest, windows-latest]
-        build_type: [Release]
+        os: [ubuntu-latest, windows-latest, macos-latest]
 
-        include:
-          - os: ubuntu-latest
-            c_compiler: gcc
-            cpp_compiler: g++
-
-          - os: ubuntu-latest
-            c_compiler: clang
-            cpp_compiler: clang++
-
-          - os: windows-latest
-            c_compiler: cl
-            cpp_compiler: cl
+    runs-on: ${{ matrix.os }}
 
     steps:
 
       - name: Checkout
         uses: actions/checkout@v4
 
-
-      - name: Setup vcpkg
-        id: vcpkg
-        uses: lukka/run-vcpkg@v11
-
-
-      - name: Cache vcpkg
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/.cache/vcpkg
-            ${{ steps.vcpkg.outputs.vcpkgRoot }}/installed
-          key: vcpkg-${{ runner.os }}-boost
-
-
-      - name: Install Boost
+      - name: Install Boost (Linux)
+        if: matrix.os == 'ubuntu-latest'
         run: |
-          ${{ steps.vcpkg.outputs.vcpkgRoot }}/vcpkg install boost-system boost-filesystem
+          sudo apt-get update
+          sudo apt-get install -y libboost-all-dev
 
+      - name: Install Boost (macOS)
+        if: matrix.os == 'macos-latest'
+        run: |
+          brew install boost
 
       - name: Configure CMake
-        run: >
-          cmake -B build
-          -S .
-          -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
-          -DCMAKE_C_COMPILER=${{ matrix.c_compiler }}
-          -DCMAKE_CXX_COMPILER=${{ matrix.cpp_compiler }}
-          -DCMAKE_TOOLCHAIN_FILE=${{ steps.vcpkg.outputs.vcpkgRoot }}/scripts/buildsystems/vcpkg.cmake
-
+        run: cmake -B build -S . -DCMAKE_BUILD_TYPE=Release
 
       - name: Build
-        run: cmake --build build --config ${{ matrix.build_type }}
-
+        run: cmake --build build --config Release
 
       - name: Test
         working-directory: build
