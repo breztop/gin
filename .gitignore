@@ -1,5 +1,7 @@
 /*
 third_party/
+
+!.github/
 !cmake/
 !examples/
 !gin/

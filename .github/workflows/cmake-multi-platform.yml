@@ -36,6 +36,21 @@ jobs:
           ./vcpkg/bootstrap-vcpkg.bat
           ./vcpkg/vcpkg install boost:x64-windows
 
+      - name: Cache CMake build
+        uses: actions/cache@v4
+        with:
+          path: build
+          key: ${{ runner.os }}-cmake-${{ hashFiles('**/CMakeLists.txt') }}
+      
+      - name: Cache vcpkg
+        if: matrix.os == 'windows-latest'
+        uses: actions/cache@v4
+        with:
+          path: |
+            vcpkg/installed
+            vcpkg/packages
+          key: ${{ runner.os }}-vcpkg-${{ hashFiles('**/CMakeLists.txt') }}
+
       - name: Configure
         run: |
           cmake -B build -S . \
