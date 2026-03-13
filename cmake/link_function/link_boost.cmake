@@ -13,7 +13,7 @@ function(link_boost_header target)
     message(STATUS "Boost version: ${Boost_VERSION}")
     
     # 只包含头文件目录，不链接任何库
-    target_include_directories(${target} PRIVATE ${Boost_INCLUDE_DIRS})
+    target_include_directories(${target} PUBLIC ${Boost_INCLUDE_DIRS})
 endfunction()
 
 

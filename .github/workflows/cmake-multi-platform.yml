@@ -16,9 +16,7 @@ jobs:
     runs-on: ${{ matrix.os }}
 
     steps:
-
-      - name: Checkout
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
       - name: Install Boost (Linux)
         if: matrix.os == 'ubuntu-latest'
@@ -31,8 +29,18 @@ jobs:
         run: |
           brew install boost
 
-      - name: Configure CMake
-        run: cmake -B build -S . -DCMAKE_BUILD_TYPE=Release
+      - name: Install Boost (Windows)
+        if: matrix.os == 'windows-latest'
+        run: |
+          git clone https://github.com/microsoft/vcpkg.git
+          ./vcpkg/bootstrap-vcpkg.bat
+          ./vcpkg/vcpkg install boost:x64-windows
+
+      - name: Configure
+        run: |
+          cmake -B build -S . \
+          -DCMAKE_BUILD_TYPE=Release \
+          ${{ matrix.os == 'windows-latest' && '-DCMAKE_TOOLCHAIN_FILE=vcpkg/scripts/buildsystems/vcpkg.cmake' || '' }}
 
       - name: Build
         run: cmake --build build --config Release
