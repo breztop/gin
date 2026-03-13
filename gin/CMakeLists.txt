@@ -21,6 +21,6 @@ link_boost_header(gin)
 
 link_nlohmann_json(gin)
 link_spdlog(gin)
-link_breutil(gin)
+# link_breutil(gin)
 
 add_iwyu(gin)
