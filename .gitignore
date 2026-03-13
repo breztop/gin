@@ -1,0 +1,15 @@
+/*
+third_party/
+!cmake/
+!examples/
+!gin/
+!test/
+!.gitignore
+!CMakeLists.txt
+!README.md
+!LICENSE
+!.clang-format
+!iwyu.imp
+
+
+platform.cmake

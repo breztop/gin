@@ -27,10 +27,13 @@ public:
     void Patch(const std::string& path, Handler handler);
     void Options(const std::string& path, Handler handler);
     void Head(const std::string& path, Handler handler);
+    void Any(const std::string& path, Handler handler);
 
     void Static(const std::string& prefix, const std::string& root);
+    void StaticFS(const std::string& prefix, const std::string& root);
 
     void Run(int port);
+    void Stop();
 
 private:
     App() = default;
@@ -56,5 +59,44 @@ inline void RouterGroup::Post(const std::string& path, Handler handler) {
 }
 
 inline void RouterGroup::Use(Middleware middleware) { middlewares_.push_back(std::move(middleware)); }
+
+inline void RouterGroup::Put(const std::string& path, Handler handler) {
+    if (router_) {
+        router_->AddRoute("PUT", prefix_ + path, std::move(handler), middlewares_);
+    }
+}
+
+inline void RouterGroup::Delete(const std::string& path, Handler handler) {
+    if (router_) {
+        router_->AddRoute("DELETE", prefix_ + path, std::move(handler), middlewares_);
+    }
+}
+
+inline void RouterGroup::Patch(const std::string& path, Handler handler) {
+    if (router_) {
+        router_->AddRoute("PATCH", prefix_ + path, std::move(handler), middlewares_);
+    }
+}
+
+inline void RouterGroup::Options(const std::string& path, Handler handler) {
+    if (router_) {
+        router_->AddRoute("OPTIONS", prefix_ + path, std::move(handler), middlewares_);
+    }
+}
+
+inline void RouterGroup::Head(const std::string& path, Handler handler) {
+    if (router_) {
+        router_->AddRoute("HEAD", prefix_ + path, std::move(handler), middlewares_);
+    }
+}
+
+inline void RouterGroup::Any(const std::string& path, Handler handler) {
+    if (router_) {
+        static const std::vector<std::string> methods = {"GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS", "HEAD"};
+        for (const auto& method : methods) {
+            router_->AddRoute(method, prefix_ + path, handler, middlewares_);
+        }
+    }
+}
 
 }  // namespace gin

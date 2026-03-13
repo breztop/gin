@@ -55,10 +55,25 @@ void App::Head(const std::string& path, Handler handler) {
     LOG_DEBUG("Route registered: HEAD {}", path);
 }
 
+static const std::vector<std::string> kMethods = {"GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS", "HEAD"};
+
+void App::Any(const std::string& path, Handler handler) {
+    for (const auto& method : kMethods) {
+        router_->AddRoute(method, path, handler, global_middlewares_);
+    }
+    LOG_DEBUG("Route registered: ANY {}", path);
+}
+
 void App::Static(const std::string& prefix, const std::string& root) {
     static_prefix_ = prefix;
     static_root_ = root;
     LOG_INFO("Static files: {} -> {}", prefix, root);
+}
+
+void App::StaticFS(const std::string& prefix, const std::string& root) {
+    static_prefix_ = prefix;
+    static_root_ = root;
+    LOG_INFO("Static files (FS): {} -> {}", prefix, root);
 }
 
 void App::Run(int port) {
@@ -67,6 +82,12 @@ void App::Run(int port) {
 
     server_ = std::make_unique<Server>("0.0.0.0", port, router_.get());
     server_->Run();
+}
+
+void App::Stop() {
+    if (server_) {
+        server_->Stop();
+    }
 }
 
 }  // namespace gin

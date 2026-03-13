@@ -5,7 +5,7 @@
 namespace gin {
 
 std::string FormFile::GetFilename() const {
-    return filename.empty() ? header_filename : filename;
+    return header_filename.empty() ? filename : header_filename;
 }
 
 std::string FormFile::GetContentType() const {

@@ -35,6 +35,7 @@ public:
 
     void ParseQueryParams();
     void ParsePostForm();
+    void ParseMultipartForm();
 };
 
 }  // namespace gin

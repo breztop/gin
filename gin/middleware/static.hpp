@@ -3,11 +3,46 @@
 #include <fstream>
 #include <sstream>
 #include <string>
+#include <unordered_map>
 
 #include "core/context.hpp"
 #include "core/types.hpp"
 
 namespace gin {
+
+namespace {
+
+std::string GetMimeType(const std::string& ext) {
+    static const std::unordered_map<std::string, std::string> mime_types = {
+        {".html", "text/html; charset=utf-8"},
+        {".htm", "text/html; charset=utf-8"},
+        {".css", "text/css"},
+        {".js", "application/javascript"},
+        {".json", "application/json"},
+        {".xml", "application/xml"},
+        {".txt", "text/plain"},
+        {".png", "image/png"},
+        {".jpg", "image/jpeg"},
+        {".jpeg", "image/jpeg"},
+        {".gif", "image/gif"},
+        {".svg", "image/svg+xml"},
+        {".ico", "image/x-icon"},
+        {".webp", "image/webp"},
+        {".mp4", "video/mp4"},
+        {".webm", "video/webm"},
+        {".mp3", "audio/mpeg"},
+        {".wav", "audio/wav"},
+        {".woff", "font/woff"},
+        {".woff2", "font/woff2"},
+        {".ttf", "font/ttf"},
+        {".pdf", "application/pdf"},
+        {".zip", "application/zip"},
+    };
+    auto it = mime_types.find(ext);
+    return it != mime_types.end() ? it->second : "application/octet-stream";
+}
+
+}  // namespace
 
 inline Middleware Static(const std::string& prefix, const std::string& root) {
     return [prefix, root](Context& ctx) {
@@ -38,25 +73,7 @@ inline Middleware Static(const std::string& prefix, const std::string& root) {
         size_t pos = file_path.find_last_of('.');
         if (pos != std::string::npos) {
             std::string ext = file_path.substr(pos);
-            if (ext == ".html" || ext == ".htm") {
-                ctx.response.headers["Content-Type"] = "text/html; charset=utf-8";
-            } else if (ext == ".css") {
-                ctx.response.headers["Content-Type"] = "text/css";
-            } else if (ext == ".js") {
-                ctx.response.headers["Content-Type"] = "application/javascript";
-            } else if (ext == ".json") {
-                ctx.response.headers["Content-Type"] = "application/json";
-            } else if (ext == ".png") {
-                ctx.response.headers["Content-Type"] = "image/png";
-            } else if (ext == ".jpg" || ext == ".jpeg") {
-                ctx.response.headers["Content-Type"] = "image/jpeg";
-            } else if (ext == ".svg") {
-                ctx.response.headers["Content-Type"] = "image/svg+xml";
-            } else if (ext == ".ico") {
-                ctx.response.headers["Content-Type"] = "image/x-icon";
-            } else if (ext == ".txt") {
-                ctx.response.headers["Content-Type"] = "text/plain";
-            }
+            ctx.response.headers["Content-Type"] = GetMimeType(ext);
         }
 
         ctx.response.status_code = 200;

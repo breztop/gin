@@ -7,7 +7,7 @@ BOOST_AUTO_TEST_CASE(TestRouterStaticRoute) {
     gin::Router router;
     bool handler_called = false;
 
-    router.AddRoute("GET", "/hello", [&handler_called](gin::Context& ctx) {
+    router.AddRoute("GET", "/hello", [&handler_called](gin::Context&) {
         handler_called = true;
     });
 
@@ -21,7 +21,7 @@ BOOST_AUTO_TEST_CASE(TestRouterStaticRoute) {
 
 BOOST_AUTO_TEST_CASE(TestRouterParamRoute) {
     gin::Router router;
-    router.AddRoute("GET", "/users/:id", [](gin::Context& ctx) {
+    router.AddRoute("GET", "/users/:id", [](gin::Context&) {
     });
 
     auto result = router.Match("GET", "/users/123");
@@ -31,7 +31,7 @@ BOOST_AUTO_TEST_CASE(TestRouterParamRoute) {
 
 BOOST_AUTO_TEST_CASE(TestRouterCatchallRoute) {
     gin::Router router;
-    router.AddRoute("GET", "/files/*", [](gin::Context& ctx) {
+    router.AddRoute("GET", "/files/*", [](gin::Context&) {
     });
 
     auto result = router.Match("GET", "/files/path/to/file.txt");

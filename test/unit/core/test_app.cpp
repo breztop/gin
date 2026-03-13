@@ -7,17 +7,17 @@
 BOOST_AUTO_TEST_CASE(TestAppBase) {
     try {
         auto app = gin::App::Default();
-        app.Use([](gin::Context& ctx) {
+        app.Use([](gin::Context&) {
         });
 
         auto group = app.Group("/api");
-        group.Use([](gin::Context& ctx) {
+        group.Use([](gin::Context&) {
         });
 
-        app.Get("/test", [](gin::Context& ctx) {
+        app.Get("/test", [](gin::Context&) {
         });
 
-        app.Post("/test", [](gin::Context& ctx) {
+        app.Post("/test", [](gin::Context&) {
         });
     } catch (const std::exception& e) {
         BOOST_FAIL("Exception thrown: " << e.what());

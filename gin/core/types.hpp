@@ -30,6 +30,12 @@ public:
 
     void Get(const std::string& path, Handler handler);
     void Post(const std::string& path, Handler handler);
+    void Put(const std::string& path, Handler handler);
+    void Delete(const std::string& path, Handler handler);
+    void Patch(const std::string& path, Handler handler);
+    void Options(const std::string& path, Handler handler);
+    void Head(const std::string& path, Handler handler);
+    void Any(const std::string& path, Handler handler);
     void Use(Middleware middleware);
 
 private:

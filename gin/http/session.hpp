@@ -19,7 +19,7 @@ using boost::asio::ip::tcp;
 
 class HTTPSession : public std::enable_shared_from_this<HTTPSession> {
 public:
-    HTTPSession(tcp::socket socket, Router* router, ConnectionManager& manager);
+    HTTPSession(tcp::socket socket, Router* router, ConnectionManager& manager, std::size_t body_limit = 1024 * 1024 * 10);
 
     void Start();
     void Stop();
@@ -34,7 +34,8 @@ private:
     void HandleError(beast::error_code ec, const std::string& what);
 
     tcp::socket socket_;
-    beast::flat_buffer buffer_{8192};
+    beast::flat_buffer buffer_;
+    std::size_t body_limit_;
     http::request<http::dynamic_body> request_;
     http::response<http::dynamic_body> response_;
     
