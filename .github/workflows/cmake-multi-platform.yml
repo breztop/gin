@@ -1,0 +1,74 @@
+name: CMake CI
+
+on:
+  push:
+    branches: ["main"]
+  pull_request:
+    branches: ["main"]
+
+jobs:
+  build:
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+      fail-fast: false
+
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+        build_type: [Release]
+
+        include:
+          - os: ubuntu-latest
+            c_compiler: gcc
+            cpp_compiler: g++
+
+          - os: ubuntu-latest
+            c_compiler: clang
+            cpp_compiler: clang++
+
+          - os: windows-latest
+            c_compiler: cl
+            cpp_compiler: cl
+
+    steps:
+
+      - name: Checkout
+        uses: actions/checkout@v4
+
+
+      - name: Setup vcpkg
+        id: vcpkg
+        uses: lukka/run-vcpkg@v11
+
+
+      - name: Cache vcpkg
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cache/vcpkg
+            ${{ steps.vcpkg.outputs.vcpkgRoot }}/installed
+          key: vcpkg-${{ runner.os }}-boost
+
+
+      - name: Install Boost
+        run: |
+          ${{ steps.vcpkg.outputs.vcpkgRoot }}/vcpkg install boost-system boost-filesystem
+
+
+      - name: Configure CMake
+        run: >
+          cmake -B build
+          -S .
+          -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
+          -DCMAKE_C_COMPILER=${{ matrix.c_compiler }}
+          -DCMAKE_CXX_COMPILER=${{ matrix.cpp_compiler }}
+          -DCMAKE_TOOLCHAIN_FILE=${{ steps.vcpkg.outputs.vcpkgRoot }}/scripts/buildsystems/vcpkg.cmake
+
+
+      - name: Build
+        run: cmake --build build --config ${{ matrix.build_type }}
+
+
+      - name: Test
+        working-directory: build
+        run: ctest --output-on-failure
