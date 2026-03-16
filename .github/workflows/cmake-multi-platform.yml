@@ -50,7 +50,9 @@ jobs:
             cmake -B build -S . \
               -DCMAKE_BUILD_TYPE=Release \
               -DCMAKE_TOOLCHAIN_FILE="$VCPKG_INSTALLATION_ROOT/scripts/buildsystems/vcpkg.cmake" \
-              -DVCPKG_TARGET_TRIPLET=x64-windows
+              -DVCPKG_TARGET_TRIPLET=x64-windows \
+              -DCMAKE_WINDOWS_EXPORT_ALL_SYMBOLS=ON \
+              -DBoost_ARCHITECTURE=-x64
           else
             cmake -B build -S . -DCMAKE_BUILD_TYPE=Release
           fi
