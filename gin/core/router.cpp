@@ -1,5 +1,6 @@
 #include "core/router.hpp"
 
+#include <algorithm>
 #include <sstream>
 #include <utility>
 
@@ -55,6 +56,10 @@ void Router::AddRoute(const std::string& method, const std::string& path, Handle
                       std::vector<Middleware> middlewares) {
     InsertRoute(method, path, std::move(handler), std::move(middlewares));
 }
+
+void Router::SetNoRouteHandler(Handler handler) { no_route_handler_ = std::move(handler); }
+
+void Router::SetNoMethodHandler(Handler handler) { no_method_handler_ = std::move(handler); }
 
 std::vector<std::string> Router::SplitPath(const std::string& path) const {
     std::vector<std::string> segments;
@@ -150,6 +155,70 @@ void Router::MatchNode(RouteNode* node, const std::vector<std::string>& segments
         result.params["path"] = remaining;
         MatchNode(node->catchall_child.get(), segments, segments.size(), result);
     }
+}
+
+bool Router::HasPath(const std::string& path) const {
+    for (const auto& [method, root] : roots_) {
+        auto segments = SplitPath(path);
+        MatchResult result;
+        MatchNode(root.get(), segments, 0, result);
+        if (result.handler) {
+            return true;
+        }
+    }
+    return false;
+}
+
+bool Router::HasMethod(const std::string& method) const {
+    return roots_.find(method) != roots_.end();
+}
+
+std::string Router::FindAlternativePath(const std::string& path) const {
+    std::string alt_path;
+    if (path.back() == '/') {
+        alt_path = path.substr(0, path.size() - 1);
+    } else {
+        alt_path = path + "/";
+    }
+
+    if (HasPath(alt_path)) {
+        return alt_path;
+    }
+    return "";
+}
+
+void CollectRoutes(const RouteNode* node, const std::string& prefix, const std::string& method,
+                   std::vector<RouteInfo>& routes) {
+    if (!node) return;
+
+    if (node->handler) {
+        RouteInfo info;
+        info.method = method;
+        info.path = prefix.empty() ? "/" : prefix;
+        info.middlewares = node->middlewares;
+        routes.push_back(std::move(info));
+    }
+
+    for (const auto& [segment, child] : node->children) {
+        CollectRoutes(child.get(), prefix + "/" + segment, method, routes);
+    }
+
+    if (node->wildcard_child) {
+        CollectRoutes(node->wildcard_child.get(), prefix + "/:" + node->wildcard_child->param_name,
+                      method, routes);
+    }
+
+    if (node->catchall_child) {
+        CollectRoutes(node->catchall_child.get(), prefix + "/*", method, routes);
+    }
+}
+
+std::vector<RouteInfo> Router::RoutesInfo() const {
+    std::vector<RouteInfo> routes;
+    for (const auto& [method, root] : roots_) {
+        CollectRoutes(root.get(), "", method, routes);
+    }
+    return routes;
 }
 
 }  // namespace gin

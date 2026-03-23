@@ -1,23 +1,23 @@
-#define BOOST_TEST_MODULE test_app
+#define BOOST_TEST_MODULE test_engine
 #include <boost/test/unit_test.hpp>
 
-#include "core/app.hpp"
+#include "core/engine.hpp"
 
 
-BOOST_AUTO_TEST_CASE(TestAppBase) {
+BOOST_AUTO_TEST_CASE(TestEngineBase) {
     try {
-        auto app = gin::App::Default();
-        app.Use([](gin::Context&) {
+        auto engine = gin::Engine::Default();
+        engine.Use([](gin::Context&) {
         });
 
-        auto group = app.Group("/api");
+        auto group = engine.Group("/api");
         group.Use([](gin::Context&) {
         });
 
-        app.Get("/test", [](gin::Context&) {
+        engine.Get("/test", [](gin::Context&) {
         });
 
-        app.Post("/test", [](gin::Context&) {
+        engine.Post("/test", [](gin::Context&) {
         });
     } catch (const std::exception& e) {
         BOOST_FAIL("Exception thrown: " << e.what());

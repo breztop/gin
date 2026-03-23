@@ -1,6 +1,7 @@
 #pragma once
 
 #include <functional>
+#include <initializer_list>
 #include <memory>
 #include <string>
 #include <utility>
@@ -14,6 +15,21 @@ class Router;
 using Handler = std::function<void(Context&)>;
 using Handlers = std::vector<Handler>;
 
+inline Handlers MakeHandlers(Handler h) {
+    Handlers chain;
+    chain.push_back(std::move(h));
+    return chain;
+}
+
+template <typename... Args>
+inline Handlers MakeHandlers(Handler h, Args&&... args) {
+    Handlers chain;
+    chain.push_back(std::move(h));
+    auto rest = MakeHandlers(std::forward<Args>(args)...);
+    chain.insert(chain.end(), rest.begin(), rest.end());
+    return chain;
+}
+
 using Middleware = std::function<void(Context&)>;
 
 struct RouteInfo {
@@ -25,8 +41,7 @@ struct RouteInfo {
 
 class RouterGroup {
 public:
-    RouterGroup(const std::string& prefix, Router* router)
-        : prefix_(prefix), router_(router) {}
+    RouterGroup(const std::string& prefix, Router* router) : prefix_(prefix), router_(router) {}
 
     void Get(const std::string& path, Handler handler);
     void Post(const std::string& path, Handler handler);
@@ -36,7 +51,11 @@ public:
     void Options(const std::string& path, Handler handler);
     void Head(const std::string& path, Handler handler);
     void Any(const std::string& path, Handler handler);
+    void Handle(const std::string& method, const std::string& path,
+                std::initializer_list<Handler> handlers);
     void Use(Middleware middleware);
+
+    const std::string& BasePath() const { return prefix_; }
 
 private:
     std::string prefix_;

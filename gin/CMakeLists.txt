@@ -1,5 +1,5 @@
 add_library(gin STATIC
-    core/app.cpp
+    core/engine.cpp
     core/context.cpp
     core/cookie.cpp
     core/form_file.cpp

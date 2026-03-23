@@ -2,11 +2,10 @@
 
 #include <any>
 #include <cstddef>
+#include <nlohmann/json.hpp>
 #include <string>
 #include <unordered_map>
 #include <vector>
-
-#include <nlohmann/json.hpp>
 
 #include "core/request.hpp"
 #include "core/response.hpp"
@@ -29,7 +28,13 @@ public:
 
     std::string Param(const std::string& key) const;
     std::string Query(const std::string& key) const;
+    std::string DefaultQuery(const std::string& key, const std::string& default_value) const;
+    std::vector<std::string> GetQueryArray(const std::string& key) const;
+    std::unordered_map<std::string, std::string> GetQueryMap(const std::string& key) const;
     std::string PostForm(const std::string& key) const;
+    std::string DefaultPostForm(const std::string& key, const std::string& default_value) const;
+    std::vector<std::string> GetPostFormArray(const std::string& key) const;
+    std::unordered_map<std::string, std::string> GetPostFormMap(const std::string& key) const;
     FormFile* GetFile(const std::string& key);
     const std::vector<FormFile>& FormFiles() const;
 
@@ -49,17 +54,29 @@ public:
 
     bool ShouldBindJSON(nlohmann::json& j);
 
-    template<typename T>
+    template <typename T>
     bool ShouldBind(T& obj);
 
-    template<typename T>
+    template <typename T>
     bool ShouldBindQuery(T& obj);
 
-    template<typename T>
+    template <typename T>
     bool ShouldBindHeader(T& obj);
 
-    template<typename T>
+    template <typename T>
     bool ShouldBindUri(T& obj);
+
+    template <typename T>
+    bool BindJSON(T& obj);
+
+    template <typename T>
+    bool BindQuery(T& obj);
+
+    template <typename T>
+    bool BindHeader(T& obj);
+
+    template <typename T>
+    bool BindUri(T& obj);
 
     std::string GetRawData() const;
     std::string ContentType() const;
@@ -76,13 +93,29 @@ public:
 
     void Set(const std::string& key, std::any value);
     std::any Get(const std::string& key);
+    std::any MustGet(const std::string& key);
+    bool Delete(const std::string& key);
+
+    std::string GetString(const std::string& key);
+    int GetInt(const std::string& key);
+    double GetFloat64(const std::string& key);
+    bool GetBool(const std::string& key);
 
     void Next();
     void Abort();
+    void AbortWithStatus(int code);
+    void AbortWithStatusJSON(int code, const nlohmann::json& obj);
     bool IsAborted() const;
 
     void Error(int code, const std::string& message);
     void AbortWithError(int code, const std::string& message);
+
+    void Status(int code);
+
+    void FileAttachment(const std::string& filepath, const std::string& filename);
+    void FileFromFS(const std::string& filepath, const std::string& root);
+
+    std::vector<std::string> HandlerNames() const;
 
     void SetHandlers(Handlers&& handlers);
     void SetParams(std::unordered_map<std::string, std::string>&& params);
@@ -98,7 +131,7 @@ private:
 
 namespace gin {
 
-template<typename T>
+template <typename T>
 bool Context::ShouldBind(T& obj) {
     nlohmann::json j;
     if (!ShouldBindJSON(j)) {
@@ -112,7 +145,7 @@ bool Context::ShouldBind(T& obj) {
     }
 }
 
-template<typename T>
+template <typename T>
 bool Context::ShouldBindQuery(T& obj) {
     try {
         nlohmann::json j;
@@ -126,7 +159,7 @@ bool Context::ShouldBindQuery(T& obj) {
     }
 }
 
-template<typename T>
+template <typename T>
 bool Context::ShouldBindHeader(T& obj) {
     try {
         nlohmann::json j;
@@ -140,7 +173,7 @@ bool Context::ShouldBindHeader(T& obj) {
     }
 }
 
-template<typename T>
+template <typename T>
 bool Context::ShouldBindUri(T& obj) {
     try {
         nlohmann::json j;
@@ -154,4 +187,40 @@ bool Context::ShouldBindUri(T& obj) {
     }
 }
 
+template <typename T>
+bool Context::BindJSON(T& obj) {
+    if (ShouldBind(obj)) {
+        return true;
+    }
+    AbortWithStatusJSON(400, {{"error", "invalid JSON"}});
+    return false;
 }
+
+template <typename T>
+bool Context::BindQuery(T& obj) {
+    if (ShouldBindQuery(obj)) {
+        return true;
+    }
+    AbortWithStatusJSON(400, {{"error", "invalid query parameters"}});
+    return false;
+}
+
+template <typename T>
+bool Context::BindHeader(T& obj) {
+    if (ShouldBindHeader(obj)) {
+        return true;
+    }
+    AbortWithStatusJSON(400, {{"error", "invalid headers"}});
+    return false;
+}
+
+template <typename T>
+bool Context::BindUri(T& obj) {
+    if (ShouldBindUri(obj)) {
+        return true;
+    }
+    AbortWithStatusJSON(400, {{"error", "invalid uri parameters"}});
+    return false;
+}
+
+}  // namespace gin

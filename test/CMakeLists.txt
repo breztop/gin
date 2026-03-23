@@ -7,7 +7,7 @@ find_package(Boost REQUIRED COMPONENTS unit_test_framework)
 
 # unit test
 add_executable(test_unit
-    unit/core/test_app.cpp
+    unit/core/test_engine.cpp
     unit/core/test_context.cpp
     unit/core/test_router.cpp
     unit/core/test_middleware_chain.cpp

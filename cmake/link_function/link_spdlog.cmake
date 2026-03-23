@@ -17,7 +17,7 @@ function(link_spdlog target)
         endif()
     endif()
 
-    target_link_libraries(${target} PRIVATE spdlog::spdlog)
+    target_link_libraries(${target} PUBLIC spdlog::spdlog)
 
     target_precompile_headers(${target} PRIVATE <spdlog/spdlog.h>)
 endfunction()

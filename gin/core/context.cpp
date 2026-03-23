@@ -20,7 +20,54 @@ std::string Context::Param(const std::string& key) const { return request.GetPar
 
 std::string Context::Query(const std::string& key) const { return request.GetQuery(key); }
 
+std::string Context::DefaultQuery(const std::string& key, const std::string& default_value) const {
+    auto value = request.GetQuery(key);
+    return value.empty() ? default_value : value;
+}
+
+std::vector<std::string> Context::GetQueryArray(const std::string& key) const {
+    std::vector<std::string> result;
+    auto range = request.query_params.equal_range(key);
+    for (auto it = range.first; it != range.second; ++it) {
+        result.push_back(it->second);
+    }
+    return result;
+}
+
+std::unordered_map<std::string, std::string> Context::GetQueryMap(const std::string& key) const {
+    std::unordered_map<std::string, std::string> result;
+    auto range = request.query_params.equal_range(key);
+    for (auto it = range.first; it != range.second; ++it) {
+        result[it->first] = it->second;
+    }
+    return result;
+}
+
 std::string Context::PostForm(const std::string& key) const { return request.GetPostForm(key); }
+
+std::string Context::DefaultPostForm(const std::string& key,
+                                     const std::string& default_value) const {
+    auto value = request.GetPostForm(key);
+    return value.empty() ? default_value : value;
+}
+
+std::vector<std::string> Context::GetPostFormArray(const std::string& key) const {
+    std::vector<std::string> result;
+    auto range = request.post_form.equal_range(key);
+    for (auto it = range.first; it != range.second; ++it) {
+        result.push_back(it->second);
+    }
+    return result;
+}
+
+std::unordered_map<std::string, std::string> Context::GetPostFormMap(const std::string& key) const {
+    std::unordered_map<std::string, std::string> result;
+    auto range = request.post_form.equal_range(key);
+    for (auto it = range.first; it != range.second; ++it) {
+        result[it->first] = it->second;
+    }
+    return result;
+}
 
 FormFile* Context::GetFile(const std::string& key) { return request.GetFile(key); }
 
@@ -258,6 +305,77 @@ std::any Context::Get(const std::string& key) {
     return std::any();
 }
 
+std::any Context::MustGet(const std::string& key) {
+    auto it = values_.find(key);
+    if (it != values_.end()) {
+        return it->second;
+    }
+    throw std::runtime_error("key not found: " + key);
+}
+
+bool Context::Delete(const std::string& key) { return values_.erase(key) > 0; }
+
+std::string Context::GetString(const std::string& key) {
+    auto val = Get(key);
+    if (val.has_value()) {
+        try {
+            return std::any_cast<std::string>(val);
+        } catch (...) {
+            return "";
+        }
+    }
+    return "";
+}
+
+int Context::GetInt(const std::string& key) {
+    auto val = Get(key);
+    if (val.has_value()) {
+        try {
+            return std::any_cast<int>(val);
+        } catch (...) {
+            try {
+                return std::stoi(std::any_cast<std::string>(val));
+            } catch (...) {
+                return 0;
+            }
+        }
+    }
+    return 0;
+}
+
+double Context::GetFloat64(const std::string& key) {
+    auto val = Get(key);
+    if (val.has_value()) {
+        try {
+            return std::any_cast<double>(val);
+        } catch (...) {
+            try {
+                return std::stod(std::any_cast<std::string>(val));
+            } catch (...) {
+                return 0.0;
+            }
+        }
+    }
+    return 0.0;
+}
+
+bool Context::GetBool(const std::string& key) {
+    auto val = Get(key);
+    if (val.has_value()) {
+        try {
+            return std::any_cast<bool>(val);
+        } catch (...) {
+            try {
+                auto s = std::any_cast<std::string>(val);
+                return s == "true" || s == "1";
+            } catch (...) {
+                return false;
+            }
+        }
+    }
+    return false;
+}
+
 void Context::Next() {
     if (handler_index_ < handlers_.size()) {
         handlers_[handler_index_++](*this);
@@ -266,7 +384,39 @@ void Context::Next() {
 
 void Context::Abort() { aborted_ = true; }
 
+void Context::AbortWithStatus(int code) {
+    response.SetStatus(code);
+    Abort();
+}
+
+void Context::AbortWithStatusJSON(int code, const nlohmann::json& obj) {
+    JSON(code, obj);
+    Abort();
+}
+
 bool Context::IsAborted() const { return aborted_; }
+
+void Context::Status(int code) { response.SetStatus(code); }
+
+void Context::FileAttachment(const std::string& filepath, const std::string& filename) {
+    response.headers["Content-Disposition"] = "attachment; filename=\"" + filename + "\"";
+    File(filepath);
+}
+
+void Context::FileFromFS(const std::string& filepath, const std::string& root) {
+    std::string full_path = root + "/" + filepath;
+    File(full_path);
+}
+
+std::vector<std::string> Context::HandlerNames() const {
+    std::vector<std::string> names;
+    for (const auto& handler : handlers_) {
+        if (handler) {
+            names.push_back("handler");
+        }
+    }
+    return names;
+}
 
 void Context::Error(int code, const std::string& message) {
     response.SetStatus(code);
