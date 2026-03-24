@@ -42,14 +42,6 @@ bool Validator::Validate(const std::string& value, const std::string& tag) {
     return true;
 }
 
-std::vector<ValidationError> Validator::ValidateStruct(void* obj, const std::string& json) {
-    std::vector<ValidationError> errors;
-    return errors;
-}
-
-bool Validator::BindJSON(const std::string& json, void* obj) {
-    return false;
-}
 
 bool Validator::ValidateRequired(const std::string& value) {
     return !value.empty();

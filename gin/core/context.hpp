@@ -2,6 +2,7 @@
 
 #include <any>
 #include <cstddef>
+#include <memory>
 #include <nlohmann/json.hpp>
 #include <string>
 #include <unordered_map>
@@ -10,7 +11,7 @@
 #include "core/request.hpp"
 #include "core/response.hpp"
 #include "core/types.hpp"
-
+#include "http/type.hpp"
 
 namespace gin {
 
@@ -19,8 +20,10 @@ struct Cookie;
 struct FormFile;
 
 
-class Context {
+class Context : public std::enable_shared_from_this<Context> {
 public:
+    using Shared = std::shared_ptr<Context>;
+
     Request request;
     Response response;
 
@@ -39,14 +42,21 @@ public:
     const std::vector<FormFile>& FormFiles() const;
 
     void JSON(int status, const nlohmann::json& j);
+    void JSON(HttpStatus status, const nlohmann::json& j);
+
     void IndentedJSON(int status, const nlohmann::json& j);
+    void IndentedJSON(HttpStatus status, const nlohmann::json& j);
+
     void AsciiJSON(int status, const nlohmann::json& j);
+    void AsciiJSON(HttpStatus status, const nlohmann::json& j);
+
     void PureJSON(int status, const nlohmann::json& j);
     void SecureJSON(int status, const nlohmann::json& j);
     void Negotiate(int status, const nlohmann::json& data);
     void Negotiate(int status, const std::string& format);
     void SaveUploadedFile(const std::string& key, const std::string& dest);
     void String(int status, const std::string& str);
+    void String(HttpStatus status, const std::string& str);
     void HTML(int status, const std::string& html);
     void File(const std::string& filepath);
     void Data(int status, const std::string& content_type, const std::vector<uint8_t>& data);

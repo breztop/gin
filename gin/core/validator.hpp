@@ -14,8 +14,6 @@ struct ValidationError {
 class Validator {
 public:
     static bool Validate(const std::string& value, const std::string& tag);
-    static std::vector<ValidationError> ValidateStruct(void* obj, const std::string& json);
-    static bool BindJSON(const std::string& json, void* obj);
 
 private:
     static bool ValidateRequired(const std::string& value);

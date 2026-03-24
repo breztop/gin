@@ -29,18 +29,18 @@ struct RewriteConfig {
 };
 
 inline Middleware Rewrite(const RewriteConfig& config) {
-    return [config](Context& ctx) {
-        std::string original_path = ctx.request.path;
-        
+    return [config](gin::Context::Shared ctx) {
+        std::string original_path = ctx->request.path;
+
         for (const auto& rule : config.rules) {
             std::string new_path = std::regex_replace(original_path, rule.pattern, rule.replacement);
             if (new_path != original_path) {
-                ctx.request.path = new_path;
+                ctx->request.path = new_path;
                 break;
             }
         }
 
-        ctx.Next();
+        ctx->Next();
     };
 }
 

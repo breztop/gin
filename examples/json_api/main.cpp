@@ -26,65 +26,65 @@ int main() {
     auto engine = gin::Engine::Default();
 
     // 简单 JSON 响应
-    engine.Get("/api/status", [](gin::Context& ctx) {
-        ctx.JSON(200, {{"status", "ok"}, {"version", "1.0.0"}, {"uptime", 12345}});
+    engine->Get("/api/status", [](gin::Context::Shared ctx) {
+        ctx->JSON(200, {{"status", "ok"}, {"version", "1.0.0"}, {"uptime", 12345}});
     });
 
     // 格式化 JSON 响应
-    engine.Get("/api/status/pretty", [](gin::Context& ctx) {
+    engine->Get("/api/status/pretty", [](gin::Context::Shared ctx) {
         nlohmann::json data = {{"status", "ok"},
                                {"version", "1.0.0"},
                                {"features", {"json", "routing", "middleware"}}};
-        ctx.IndentedJSON(200, data);
+        ctx->IndentedJSON(200, data);
     });
 
     // 接收并返回 JSON
-    engine.Post("/api/echo", [](gin::Context& ctx) {
+    engine->Post("/api/echo", [](gin::Context::Shared ctx) {
         nlohmann::json body;
-        if (ctx.ShouldBindJSON(body)) {
-            ctx.JSON(200, {{"echo", body}});
+        if (ctx->ShouldBindJSON(body)) {
+            ctx->JSON(200, {{"echo", body}});
         } else {
-            ctx.JSON(400, {{"error", "Invalid JSON"}});
+            ctx->JSON(400, {{"error", "Invalid JSON"}});
         }
     });
 
     // 结构体绑定
-    engine.Post("/api/products", [](gin::Context& ctx) {
+    engine->Post("/api/products", [](gin::Context::Shared ctx) {
         Product product;
-        if (ctx.BindJSON(product)) {
+        if (ctx->BindJSON(product)) {
             product.id = 1;
-            ctx.JSON(201, {{"data", product}});
+            ctx->JSON(201, {{"data", product}});
         }
     });
 
     // 带错误处理的 JSON
-    engine.Post("/api/validate", [](gin::Context& ctx) {
+    engine->Post("/api/validate", [](gin::Context::Shared ctx) {
         nlohmann::json body;
-        if (!ctx.ShouldBindJSON(body)) {
-            ctx.AbortWithStatusJSON(400, {{"error", "Invalid JSON format"}});
+        if (!ctx->ShouldBindJSON(body)) {
+            ctx->AbortWithStatusJSON(400, {{"error", "Invalid JSON format"}});
             return;
         }
 
         if (!body.contains("email") || !body["email"].is_string()) {
-            ctx.AbortWithStatusJSON(400, {{"error", "Email is required"}});
+            ctx->AbortWithStatusJSON(400, {{"error", "Email is required"}});
             return;
         }
 
-        ctx.JSON(200, {{"message", "Valid"}, {"email", body["email"]}});
+        ctx->JSON(200, {{"message", "Valid"}, {"email", body["email"]}});
     });
 
     // 数组响应
-    engine.Get("/api/items", [](gin::Context& ctx) {
+    engine->Get("/api/items", [](gin::Context::Shared ctx) {
         nlohmann::json items = nlohmann::json::array({{{"id", 1}, {"name", "Item 1"}},
                                                       {{"id", 2}, {"name", "Item 2"}},
                                                       {{"id", 3}, {"name", "Item 3"}}});
-        ctx.JSON(200, {{"items", items}, {"total", items.size()}});
+        ctx->JSON(200, {{"items", items}, {"total", items.size()}});
     });
 
     // 带元数据的分页响应
-    engine.Get("/api/list", [](gin::Context& ctx) {
-        int page = std::stoi(ctx.DefaultQuery("page", "1"));
-        int per_page = std::stoi(ctx.DefaultQuery("per_page", "10"));
+    engine->Get("/api/list", [](gin::Context::Shared ctx) {
+        int page = std::stoi(ctx->DefaultQuery("page", "1"));
+        int per_page = std::stoi(ctx->DefaultQuery("per_page", "10"));
 
         nlohmann::json items = nlohmann::json::array();
         for (int i = 0; i < per_page && i < 5; ++i) {
@@ -92,10 +92,10 @@ int main() {
                              {"name", "Item " + std::to_string((page - 1) * per_page + i + 1)}});
         }
 
-        ctx.JSON(200,
-                 {{"data", items},
-                  {"meta",
-                   {{"page", page}, {"per_page", per_page}, {"total", 50}, {"total_pages", 5}}}});
+        ctx->JSON(200,
+                  {{"data", items},
+                   {"meta",
+                    {{"page", page}, {"per_page", per_page}, {"total", 50}, {"total_pages", 5}}}});
     });
 
     std::cout << "JSON API example starting on http://127.0.0.1:8080" << std::endl;
@@ -110,7 +110,7 @@ int main() {
         << std::endl;
     std::cout << "  curl http://127.0.0.1:8080/api/items" << std::endl;
     std::cout << "  curl 'http://127.0.0.1:8080/api/list?page=2&per_page=3'" << std::endl;
-    engine.Run(8080);
+    engine->Run(8080);
 
     return 0;
 }

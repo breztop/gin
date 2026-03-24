@@ -79,6 +79,10 @@ void Context::JSON(int status, const nlohmann::json& j) {
     response.body = j.dump();
 }
 
+void Context::JSON(HttpStatus status, const nlohmann::json& j) {
+    JSON(static_cast<int>(status), j);
+}
+
 void Context::IndentedJSON(int status, const nlohmann::json& j) {
     response.SetStatus(status);
     response.headers["Content-Type"] = "application/json";
@@ -137,6 +141,10 @@ void Context::String(int status, const std::string& str) {
     response.SetStatus(status);
     response.headers["Content-Type"] = "text/plain; charset=utf-8";
     response.body = str;
+}
+
+void Context::String(HttpStatus status, const std::string& str) {
+    String(static_cast<int>(status), str);
 }
 
 void Context::HTML(int status, const std::string& html) {
@@ -232,13 +240,36 @@ std::string Context::Url() const {
 std::string Context::FullPath() const { return Url(); }
 
 std::string Context::GetCookie(const std::string& name) const {
-    for (const auto& cookie : response.cookies) {
-        if (cookie.name == name) {
-            return cookie.value;
+    std::string cookie_header = request.GetHeader("Cookie");
+    if (cookie_header.empty()) {
+        return "";
+    }
+
+    std::string target = name + "=";
+    std::string::size_type pos = 0;
+    while (pos < cookie_header.size()) {
+        // skip leading spaces
+        while (pos < cookie_header.size() && cookie_header[pos] == ' ') {
+            ++pos;
         }
+        if (pos >= cookie_header.size()) break;
+
+        // find end of this cookie (semicolon or end of string)
+        auto end = cookie_header.find(';', pos);
+        if (end == std::string::npos) {
+            end = cookie_header.size();
+        }
+
+        // check if this cookie matches the target name
+        if (end - pos >= target.size() && cookie_header.compare(pos, target.size(), target) == 0) {
+            return cookie_header.substr(pos + target.size(), end - pos - target.size());
+        }
+
+        pos = end + 1;
     }
     return "";
 }
+
 
 void Context::SecureJSON(int status, const nlohmann::json& j) {
     response.SetStatus(status);
@@ -378,7 +409,7 @@ bool Context::GetBool(const std::string& key) {
 
 void Context::Next() {
     if (handler_index_ < handlers_.size()) {
-        handlers_[handler_index_++](*this);
+        handlers_[handler_index_++](shared_from_this());
     }
 }
 

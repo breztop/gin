@@ -82,19 +82,19 @@ private:
 };
 
 inline Middleware RateLimit(const RateLimitConfig& config) {
-    return [config](Context& ctx) {
+    return [config](gin::Context::Shared ctx) {
         std::string key;
 
         if (config.key_func == "ip") {
-            key = ctx.request.GetHeader("X-Forwarded-For");
+            key = ctx->request.GetHeader("X-Forwarded-For");
             if (key.empty()) {
-                key = ctx.request.GetHeader("X-Real-IP");
+                key = ctx->request.GetHeader("X-Real-IP");
             }
             if (key.empty()) {
                 key = "default";
             }
         } else if (config.key_func == "api_key") {
-            auto api_key = ctx.request.GetHeader("X-API-Key");
+            auto api_key = ctx->request.GetHeader("X-API-Key");
             if (!api_key.empty()) {
                 key = "api:" + api_key;
             } else {
@@ -105,12 +105,12 @@ inline Middleware RateLimit(const RateLimitConfig& config) {
         }
 
         if (!RateLimiter::Instance().Allow(key, config.burst)) {
-            ctx.AbortWithError(429, "Too Many Requests");
-            ctx.Header("Retry-After", "1");
+            ctx->AbortWithError(429, "Too Many Requests");
+            ctx->Header("Retry-After", "1");
             return;
         }
 
-        ctx.Next();
+        ctx->Next();
     };
 }
 

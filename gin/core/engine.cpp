@@ -5,9 +5,9 @@
 
 namespace gin {
 
-Engine Engine::Default() {
-    Engine engine;
-    engine.router_ = std::make_unique<Router>();
+std::unique_ptr<Engine> Engine::Default() {
+    auto engine = std::unique_ptr<Engine>(new Engine());
+    engine->router_ = std::make_unique<Router>();
     return engine;
 }
 
@@ -16,11 +16,21 @@ void Engine::Use(Middleware middleware) {
     middleware_chain_.Use(std::move(middleware));
 }
 
-RouterGroup Engine::Group(const std::string& prefix) { return RouterGroup(prefix, router_.get()); }
+RouterGroup::Shared Engine::Group(const std::string& prefix) {
+    return std::make_shared<RouterGroup>(prefix, router_.get());
+}
+
+RouterGroup::Shared Engine::Group(const std::string& prefix, Middleware middleware) {
+    auto group = std::make_shared<RouterGroup>(prefix, router_.get());
+    group->Use(std::move(middleware));
+    return group;
+}
 
 void Engine::Handle(const std::string& method, const std::string& path,
                     std::initializer_list<Handler> handlers) {
-    if (handlers.size() == 0) return;
+    if (handlers.size() == 0) {
+        return;
+    }
 
     auto it = handlers.begin();
     Handler final_handler = *it;
@@ -28,9 +38,10 @@ void Engine::Handle(const std::string& method, const std::string& path,
     for (; it != handlers.end(); ++it) {
         Handler next = *it;
         Handler prev = std::move(final_handler);
-        final_handler = [prev = std::move(prev), next = std::move(next)](Context& ctx) {
+        final_handler = [prev = std::move(prev),
+                         next = std::move(next)](std::shared_ptr<Context> ctx) {
             prev(ctx);
-            if (!ctx.IsAborted()) {
+            if (!ctx->IsAborted()) {
                 next(ctx);
             }
         };

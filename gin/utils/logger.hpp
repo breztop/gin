@@ -22,10 +22,8 @@ public:
         return instance;
     }
 
-    void Init(std::string_view name = "gin",
-              std::string_view level = "info",
-              std::string_view log_file = "",
-              bool console = true) {
+    void Init(std::string_view name = "gin", std::string_view level = "info",
+              std::string_view log_file = "", bool console = true) {
         if (initialized_) {
             return;
         }
@@ -36,7 +34,7 @@ public:
 
         if (console) {
             auto console_sink = std::make_shared<spdlog::sinks::stdout_color_sink_mt>();
-            console_sink->set_pattern("[%Y-%m-%d %H:%M:%S.%e] [%^%l%$] [%n] %v");
+            console_sink->set_pattern("[%H:%M:%S.%e] [%^%l%$] [%n] [%g:%#] %v");
             sinks.push_back(console_sink);
         }
 
@@ -44,7 +42,7 @@ public:
             try {
                 auto file_sink = std::make_shared<spdlog::sinks::rotating_file_sink_mt>(
                     std::string(log_file), 1024 * 1024 * 10, 3);
-                file_sink->set_pattern("[%Y-%m-%d %H:%M:%S.%e] [%l] [%n] %v");
+                file_sink->set_pattern("[%H:%M:%S.%e] [%l] [%n] [%g:%#] %v");
                 sinks.push_back(file_sink);
             } catch (const spdlog::spdlog_ex& ex) {
                 std::cerr << "Failed to create file sink: " << ex.what() << std::endl;

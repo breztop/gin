@@ -7,9 +7,9 @@
 namespace gin {
 
 inline Middleware Logger() {
-    return [](Context& ctx) {
-        LOG_INFO("{} {} {}", ctx.request.method, ctx.request.path, ctx.response.status_code);
-        ctx.Next();
+    return [](gin::Context::Shared ctx) {
+        LOG_INFO("{} {} {}", ctx->request.method, ctx->request.path, ctx->response.status_code);
+        ctx->Next();
     };
 }
 

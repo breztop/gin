@@ -16,20 +16,20 @@ void MiddlewareChain::SetHandlers(Handlers&& handlers) {
     }
 }
 
-void MiddlewareChain::Run(Context& ctx) {
+void MiddlewareChain::Run(std::shared_ptr<Context> ctx) {
     index_ = 0;
     auto handlers = std::vector<Handler>{};
 
     for (auto& middleware : middlewares_) {
-        handlers.push_back([&middleware](Context& c) {
-            middleware(c);
+        handlers.push_back([&middleware](std::shared_ptr<Context> ctx) {
+            middleware(ctx);
         });
     }
 
-    ctx.SetHandlers(std::move(handlers));
+    ctx->SetHandlers(std::move(handlers));
 
-    if (!ctx.IsAborted()) {
-        ctx.Next();
+    if (!ctx->IsAborted()) {
+        ctx->Next();
     }
 }
 

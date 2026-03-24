@@ -77,56 +77,56 @@ int main() {
     auto engine = gin::Engine::Default();
     UserService service;
 
-    auto api = engine.Group("/api/v1/users");
+    auto api = engine->Group("/api/v1/users");
 
     // GET /api/v1/users - 获取所有用户
-    api.Get("", [&service](gin::Context& ctx) {
+    api->Get("", [&service](gin::Context::Shared ctx) {
         auto users = service.GetAll();
         nlohmann::json j = users;
-        ctx.JSON(200, {{"data", j}, {"total", users.size()}});
+        ctx->JSON(200, {{"data", j}, {"total", users.size()}});
     });
 
     // GET /api/v1/users/:id - 获取单个用户
-    api.Get("/:id", [&service](gin::Context& ctx) {
-        int id = std::stoi(ctx.Param("id"));
+    api->Get("/:id", [&service](gin::Context::Shared ctx) {
+        int id = std::stoi(ctx->Param("id"));
         auto* user = service.GetById(id);
         if (user) {
-            ctx.JSON(200, {{"data", *user}});
+            ctx->JSON(200, {{"data", *user}});
         } else {
-            ctx.JSON(404, {{"error", "User not found"}});
+            ctx->JSON(404, {{"error", "User not found"}});
         }
     });
 
     // POST /api/v1/users - 创建用户
-    api.Post("", [&service](gin::Context& ctx) {
+    api->Post("", [&service](gin::Context::Shared ctx) {
         User user;
-        if (ctx.BindJSON(user)) {
+        if (ctx->BindJSON(user)) {
             auto created = service.Create(user);
-            ctx.JSON(201, {{"data", created}});
+            ctx->JSON(201, {{"data", created}});
         }
     });
 
     // PUT /api/v1/users/:id - 更新用户
-    api.Put("/:id", [&service](gin::Context& ctx) {
-        int id = std::stoi(ctx.Param("id"));
+    api->Put("/:id", [&service](gin::Context::Shared ctx) {
+        int id = std::stoi(ctx->Param("id"));
         User user;
-        if (ctx.BindJSON(user)) {
+        if (ctx->BindJSON(user)) {
             if (service.Update(id, user)) {
                 user.id = id;
-                ctx.JSON(200, {{"data", user}});
+                ctx->JSON(200, {{"data", user}});
             } else {
-                ctx.JSON(404, {{"error", "User not found"}});
+                ctx->JSON(404, {{"error", "User not found"}});
             }
         }
     });
 
     // DELETE /api/v1/users/:id - 删除用户
-    api.Delete("/:id", [&service](gin::Context& ctx) {
-        int id = std::stoi(ctx.Param("id"));
+    api->Delete("/:id", [&service](gin::Context::Shared ctx) {
+        int id = std::stoi(ctx->Param("id"));
         if (service.Delete(id)) {
-            ctx.JSON(200, {{"message", "User deleted"}});
+            ctx->JSON(200, {{"message", "User deleted"}});
         } else {
-            ctx.JSON(404, {{"error", "User not found"}});
+            ctx->JSON(404, {{"error", "User not found"}});
         }
     });
 
@@ -137,7 +137,7 @@ int main() {
     std::cout << "  POST   http://127.0.0.1:8080/api/v1/users" << std::endl;
     std::cout << "  PUT    http://127.0.0.1:8080/api/v1/users/1" << std::endl;
     std::cout << "  DELETE http://127.0.0.1:8080/api/v1/users/1" << std::endl;
-    engine.Run(8080);
+    engine->Run(8080);
 
     return 0;
 }

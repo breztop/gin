@@ -18,18 +18,18 @@ struct KeyAuthConfig {
 };
 
 inline Middleware KeyAuth(const KeyAuthConfig& config) {
-    return [config](Context& ctx) {
+    return [config](gin::Context::Shared ctx) {
         std::string api_key;
 
-        auto header_key = ctx.request.GetHeader(config.header_name);
+        auto header_key = ctx->request.GetHeader(config.header_name);
         if (!header_key.empty()) {
             api_key = header_key;
         } else {
-            api_key = ctx.Query(config.query_name);
+            api_key = ctx->Query(config.query_name);
         }
 
         if (api_key.empty()) {
-            ctx.AbortWithError(401, "API key required");
+            ctx->AbortWithError(401, "API key required");
             return;
         }
 
@@ -42,12 +42,12 @@ inline Middleware KeyAuth(const KeyAuthConfig& config) {
         }
 
         if (!valid) {
-            ctx.AbortWithError(401, "Invalid API key");
+            ctx->AbortWithError(401, "Invalid API key");
             return;
         }
 
-        ctx.Set("api_key", api_key);
-        ctx.Next();
+        ctx->Set("api_key", api_key);
+        ctx->Next();
     };
 }
 

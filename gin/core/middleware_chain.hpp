@@ -18,7 +18,7 @@ public:
     void Use(Middleware middleware);
     void SetHandlers(Handlers&& handlers);
 
-    void Run(Context& ctx);
+    void Run(std::shared_ptr<Context> ctx);
 
 private:
     std::vector<Middleware> middlewares_;

@@ -43,13 +43,13 @@ int main() {
     app.Use(gin::middleware::Logger());
     app.Use(gin::middleware::Recovery());
     
-    app.Get("/", [](gin::Context& ctx) {
-        ctx.JSON(200, {{"message", "Hello World"}});
+    app.Get("/", [](gin::Context::Shared ctx) {
+        ctx->JSON(200, {{"message", "Hello World"}});
     });
     
-    app.Get("/users/:id", [](gin::Context& ctx) {
-        auto id = ctx.Param("id");
-        ctx.JSON(200, {{"id", id}, {"name", "Alice"}});
+    app.Get("/users/:id", [](gin::Context::Shared ctx) {
+        auto id = ctx->Param("id");
+        ctx->JSON(200, {{"id", id}, {"name", "Alice"}});
     });
     
     app.Run(8080);

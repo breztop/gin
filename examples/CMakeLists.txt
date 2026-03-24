@@ -3,6 +3,10 @@ add_executable(hello_world hello_world/main.cpp)
 target_include_directories(hello_world PRIVATE ${CMAKE_SOURCE_DIR})
 target_link_libraries(hello_world gin)
 
+add_executable(basic basic/main.cpp)
+target_include_directories(basic PRIVATE ${CMAKE_SOURCE_DIR})
+target_link_libraries(basic gin)
+
 add_executable(file_upload file_upload/main.cpp)
 target_include_directories(file_upload PRIVATE ${CMAKE_SOURCE_DIR})
 target_link_libraries(file_upload gin)

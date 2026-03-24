@@ -56,16 +56,16 @@ void HTTPSession::ProcessRequest() {
     ctx_->request.method = std::string(request_.method_string());
     ctx_->request.path = std::string(request_.target());
 
-    auto query_pos = ctx_->request.path.find('?');
-    if (query_pos != std::string::npos) {
-        ctx_->request.query_string = ctx_->request.path.substr(query_pos + 1);
-        ctx_->request.path = ctx_->request.path.substr(0, query_pos);
-    }
-
     LOG_DEBUG("Incoming request: {} {}", ctx_->request.method, ctx_->request.path);
 
     for (auto& header : request_.base()) {
         ctx_->request.headers[header.name_string()] = header.value();
+    }
+
+    auto query_pos = ctx_->request.path.find('?');
+    if (query_pos != std::string::npos) {
+        ctx_->request.query_string = ctx_->request.path.substr(query_pos + 1);
+        ctx_->request.path = ctx_->request.path.substr(0, query_pos);
     }
 
     ctx_->request.body = beast::buffers_to_string(request_.body().data());
@@ -99,7 +99,7 @@ void HTTPSession::ProcessRequest() {
             if (no_route) {
                 LOG_WARN("Route not found (custom handler): {} {}", ctx_->request.method,
                          ctx_->request.path);
-                no_route(*ctx_);
+                no_route(ctx_);
             } else {
                 LOG_WARN("Route not found: {} {}", ctx_->request.method, ctx_->request.path);
                 ctx_->AbortWithError(404, "Not Found");
@@ -120,11 +120,21 @@ void HTTPSession::WriteResponse() {
         response_.set(key, value);
     }
 
+    for (const auto& cookie : ctx_->response.cookies) {
+        response_.set(http::field::set_cookie, cookie.ToHeader());
+    }
+
     beast::ostream(response_.body()) << ctx_->response.body;
 
     response_.content_length(ctx_->response.body.size());
 
     http::async_write(socket_, response_, [self](beast::error_code ec, std::size_t) {
+        if (ec) {
+            LOG_ERROR("Write error: {}", ec.message());
+            self->HandleError(ec, "write");
+            return;
+        }
+        LOG_DEBUG("response data: {}", beast::buffers_to_string(self->response_.body().data()));
         self->Stop();
     });
 }

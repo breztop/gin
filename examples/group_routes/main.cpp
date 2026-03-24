@@ -9,72 +9,72 @@ int main() {
     auto engine = gin::Engine::Default();
 
     // 公开路由
-    engine.Get("/", [](gin::Context& ctx) {
-        ctx.JSON(200, {{"message", "Welcome to the API"}});
+    engine->Get("/", [](gin::Context::Shared ctx) {
+        ctx->JSON(200, {{"message", "Welcome to the API"}});
     });
 
-    engine.Get("/health", [](gin::Context& ctx) {
-        ctx.JSON(200, {{"status", "ok"}});
+    engine->Get("/health", [](gin::Context::Shared ctx) {
+        ctx->JSON(200, {{"status", "ok"}});
     });
 
     // API v1 路由组
-    auto apiV1 = engine.Group("/api/v1");
+    auto apiV1 = engine->Group("/api/v1");
     {
-        apiV1.Get("/users", [](gin::Context& ctx) {
-            ctx.JSON(200, {{"version", "v1"}, {"users", nlohmann::json::array({"alice", "bob"})}});
+        apiV1->Get("/users", [](gin::Context::Shared ctx) {
+            ctx->JSON(200, {{"version", "v1"}, {"users", nlohmann::json::array({"alice", "bob"})}});
         });
 
-        apiV1.Get("/users/:id", [](gin::Context& ctx) {
-            auto id = ctx.Param("id");
-            ctx.JSON(200, {{"version", "v1"}, {"user_id", id}});
+        apiV1->Get("/users/:id", [](gin::Context::Shared ctx) {
+            auto id = ctx->Param("id");
+            ctx->JSON(200, {{"version", "v1"}, {"user_id", id}});
         });
 
-        apiV1.Post("/users", [](gin::Context& ctx) {
+        apiV1->Post("/users", [](gin::Context::Shared ctx) {
             nlohmann::json body;
-            if (ctx.ShouldBindJSON(body)) {
-                ctx.JSON(201, {{"message", "User created"}, {"user", body}});
+            if (ctx->ShouldBindJSON(body)) {
+                ctx->JSON(201, {{"message", "User created"}, {"user", body}});
             } else {
-                ctx.JSON(400, {{"error", "Invalid JSON"}});
+                ctx->JSON(400, {{"error", "Invalid JSON"}});
             }
         });
     }
 
     // API v2 路由组
-    auto apiV2 = engine.Group("/api/v2");
+    auto apiV2 = engine->Group("/api/v2");
     {
-        apiV2.Get("/users", [](gin::Context& ctx) {
-            ctx.JSON(200, {{"version", "v2"},
-                           {"users", nlohmann::json::array({"alice", "bob", "charlie"})},
-                           {"total", 3}});
+        apiV2->Get("/users", [](gin::Context::Shared ctx) {
+            ctx->JSON(200, {{"version", "v2"},
+                            {"users", nlohmann::json::array({"alice", "bob", "charlie"})},
+                            {"total", 3}});
         });
 
-        apiV2.Get("/users/:id", [](gin::Context& ctx) {
-            auto id = ctx.Param("id");
-            ctx.JSON(200, {{"version", "v2"},
-                           {"user_id", id},
-                           {"details",
-                            {{"name", "User " + id}, {"email", "user" + id + "@example.com"}}}});
+        apiV2->Get("/users/:id", [](gin::Context::Shared ctx) {
+            auto id = ctx->Param("id");
+            ctx->JSON(200, {{"version", "v2"},
+                            {"user_id", id},
+                            {"details",
+                             {{"name", "User " + id}, {"email", "user" + id + "@example.com"}}}});
         });
     }
 
     // Admin 路由组
-    auto admin = engine.Group("/admin");
+    auto admin = engine->Group("/admin");
     {
-        admin.Use([](gin::Context& ctx) {
-            auto token = ctx.request.GetHeader("X-Admin-Token");
+        admin->Use([](gin::Context::Shared ctx) {
+            auto token = ctx->request.GetHeader("X-Admin-Token");
             if (token != "secret123") {
-                ctx.AbortWithStatusJSON(403, {{"error", "Admin access required"}});
+                ctx->AbortWithStatusJSON(403, {{"error", "Admin access required"}});
                 return;
             }
-            ctx.Next();
+            ctx->Next();
         });
 
-        admin.Get("/stats", [](gin::Context& ctx) {
-            ctx.JSON(200, {{"users", 100}, {"requests", 12345}});
+        admin->Get("/stats", [](gin::Context::Shared ctx) {
+            ctx->JSON(200, {{"users", 100}, {"requests", 12345}});
         });
 
-        admin.Post("/config", [](gin::Context& ctx) {
-            ctx.JSON(200, {{"message", "Config updated"}});
+        admin->Post("/config", [](gin::Context::Shared ctx) {
+            ctx->JSON(200, {{"message", "Config updated"}});
         });
     }
 
@@ -90,7 +90,7 @@ int main() {
     std::cout << "Admin routes (need token):" << std::endl;
     std::cout << "  curl -H 'X-Admin-Token: secret123' http://127.0.0.1:8080/admin/stats"
               << std::endl;
-    engine.Run(8080);
+    engine->Run(8080);
 
     return 0;
 }

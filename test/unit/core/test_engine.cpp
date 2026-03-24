@@ -7,17 +7,17 @@
 BOOST_AUTO_TEST_CASE(TestEngineBase) {
     try {
         auto engine = gin::Engine::Default();
-        engine.Use([](gin::Context&) {
+        engine->Use([](gin::Context::Shared) {
         });
 
-        auto group = engine.Group("/api");
-        group.Use([](gin::Context&) {
+        auto group = engine->Group("/api");
+        group->Use([](gin::Context::Shared) {
         });
 
-        engine.Get("/test", [](gin::Context&) {
+        engine->Get("/test", [](gin::Context::Shared) {
         });
 
-        engine.Post("/test", [](gin::Context&) {
+        engine->Post("/test", [](gin::Context::Shared) {
         });
     } catch (const std::exception& e) {
         BOOST_FAIL("Exception thrown: " << e.what());

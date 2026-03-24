@@ -14,8 +14,8 @@ struct GzipConfig {
 };
 
 inline Middleware Gzip(const GzipConfig& config = GzipConfig()) {
-    return [config](Context& ctx) {
-        ctx.Next();
+    return [config](gin::Context::Shared ctx) {
+        ctx->Next();
     };
 }
 

@@ -12,7 +12,7 @@ namespace gin {
 class Context;
 class Router;
 
-using Handler = std::function<void(Context&)>;
+using Handler = std::function<void(std::shared_ptr<Context>)>;
 using Handlers = std::vector<Handler>;
 
 inline Handlers MakeHandlers(Handler h) {
@@ -30,7 +30,7 @@ inline Handlers MakeHandlers(Handler h, Args&&... args) {
     return chain;
 }
 
-using Middleware = std::function<void(Context&)>;
+using Middleware = std::function<void(std::shared_ptr<Context>)>;
 
 struct RouteInfo {
     std::string path;
@@ -41,6 +41,7 @@ struct RouteInfo {
 
 class RouterGroup {
 public:
+    using Shared = std::shared_ptr<RouterGroup>;
     RouterGroup(const std::string& prefix, Router* router) : prefix_(prefix), router_(router) {}
 
     void Get(const std::string& path, Handler handler);

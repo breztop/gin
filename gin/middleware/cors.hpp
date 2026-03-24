@@ -16,22 +16,22 @@ struct CORSOptions {
 };
 
 inline Middleware CORS(const CORSOptions& options = CORSOptions()) {
-    return [options](Context& ctx) {
-        ctx.Header("Access-Control-Allow-Origin", options.origin);
-        ctx.Header("Access-Control-Allow-Methods", options.methods);
-        ctx.Header("Access-Control-Allow-Headers", options.headers);
-        ctx.Header("Access-Control-Max-Age", std::to_string(options.max_age));
-        
+    return [options](gin::Context::Shared ctx) {
+        ctx->Header("Access-Control-Allow-Origin", options.origin);
+        ctx->Header("Access-Control-Allow-Methods", options.methods);
+        ctx->Header("Access-Control-Allow-Headers", options.headers);
+        ctx->Header("Access-Control-Max-Age", std::to_string(options.max_age));
+
         if (options.credentials) {
-            ctx.Header("Access-Control-Allow-Credentials", "true");
+            ctx->Header("Access-Control-Allow-Credentials", "true");
         }
-        
-        if (ctx.request.method == "OPTIONS") {
-            ctx.Abort();
+
+        if (ctx->request.method == "OPTIONS") {
+            ctx->Abort();
             return;
         }
-        
-        ctx.Next();
+
+        ctx->Next();
     };
 }
 

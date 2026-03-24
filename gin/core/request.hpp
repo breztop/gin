@@ -25,6 +25,7 @@ public:
     std::string body;
     std::vector<uint8_t> body_bytes;
 
+
     std::string GetHeader(const std::string& key) const;
     std::string GetParam(const std::string& key) const;
     std::string GetQuery(const std::string& key) const;
@@ -33,6 +34,7 @@ public:
     const std::vector<FormFile>& GetFiles() const;
     bool IsTLS() const;
 
+    void ParseCookies();
     void ParseQueryParams();
     void ParsePostForm();
     void ParseMultipartForm();

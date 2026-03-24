@@ -25,14 +25,14 @@ inline std::string GenerateRequestID() {
 }
 
 inline Middleware RequestID(const std::string& header = "X-Request-ID") {
-    return [header](Context& ctx) {
-        auto id = ctx.request.GetHeader(header);
+    return [header](gin::Context::Shared ctx) {
+        auto id = ctx->request.GetHeader(header);
         if (id.empty()) {
             id = GenerateRequestID();
         }
-        ctx.Set("request_id", id);
-        ctx.Header(header, id);
-        ctx.Next();
+        ctx->Set("request_id", id);
+        ctx->Header(header, id);
+        ctx->Next();
     };
 }
 

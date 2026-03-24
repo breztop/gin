@@ -9,15 +9,15 @@
 namespace gin {
 
 inline Middleware Recovery() {
-    return [](Context& ctx) {
+    return [](std::shared_ptr<Context> ctx) {
         try {
-            ctx.Next();
+            ctx->Next();
         } catch (const std::exception& e) {
             LOG_ERROR("Panic: {}", e.what());
-            ctx.AbortWithError(500, "Internal Server Error");
+            ctx->AbortWithError(500, "Internal Server Error");
         } catch (...) {
             LOG_ERROR("Unknown panic");
-            ctx.AbortWithError(500, "Internal Server Error");
+            ctx->AbortWithError(500, "Internal Server Error");
         }
     };
 }

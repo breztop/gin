@@ -14,12 +14,14 @@
 
 namespace gin {
 
+
 class Engine {
 public:
-    static Engine Default();
+    static std::unique_ptr<Engine> Default();
 
     void Use(Middleware middleware);
-    RouterGroup Group(const std::string& prefix);
+    RouterGroup::Shared Group(const std::string& prefix);
+    RouterGroup::Shared Group(const std::string& prefix, Middleware middleware);
 
     void Handle(const std::string& method, const std::string& path,
                 std::initializer_list<Handler> handlers);
@@ -133,9 +135,10 @@ inline void RouterGroup::Handle(const std::string& method, const std::string& pa
         for (; it != handlers.end(); ++it) {
             Handler next = *it;
             Handler prev = std::move(final_handler);
-            final_handler = [prev = std::move(prev), next = std::move(next)](Context& ctx) {
+            final_handler = [prev = std::move(prev),
+                             next = std::move(next)](std::shared_ptr<Context> ctx) {
                 prev(ctx);
-                if (!ctx.IsAborted()) {
+                if (!ctx->IsAborted()) {
                     next(ctx);
                 }
             };

@@ -45,11 +45,11 @@ std::string GetMimeType(const std::string& ext) {
 }  // namespace
 
 inline Middleware Static(const std::string& prefix, const std::string& root) {
-    return [prefix, root](Context& ctx) {
-        std::string path = ctx.request.path;
+    return [prefix, root](gin::Context::Shared ctx) {
+        std::string path = ctx->request.path;
 
         if (path.find(prefix) != 0) {
-            ctx.Next();
+            ctx->Next();
             return;
         }
 
@@ -62,21 +62,21 @@ inline Middleware Static(const std::string& prefix, const std::string& root) {
 
         std::ifstream file(file_path, std::ios::binary);
         if (!file) {
-            ctx.AbortWithError(404, "File not found");
+            ctx->AbortWithError(404, "File not found");
             return;
         }
 
         std::ostringstream ss;
         ss << file.rdbuf();
-        ctx.response.body = ss.str();
+        ctx->response.body = ss.str();
 
         size_t pos = file_path.find_last_of('.');
         if (pos != std::string::npos) {
             std::string ext = file_path.substr(pos);
-            ctx.response.headers["Content-Type"] = GetMimeType(ext);
+            ctx->response.headers["Content-Type"] = GetMimeType(ext);
         }
 
-        ctx.response.status_code = 200;
+        ctx->response.status_code = 200;
     };
 }
 

@@ -21,7 +21,7 @@ int main() {
     auto engine = gin::Engine::Default();
 
     // 显示表单页面
-    engine.Get("/", [](gin::Context& ctx) {
+    engine->Get("/", [](gin::Context::Shared ctx) {
         std::string html = R"(
 <!DOCTYPE html>
 <html>
@@ -37,46 +37,46 @@ int main() {
 </body>
 </html>
 )";
-        ctx.HTML(200, html);
+        ctx->HTML(200, html);
     });
 
     // 处理表单提交 - 使用 BindQuery
-    engine.Get("/book", [](gin::Context& ctx) {
+    engine->Get("/book", [](gin::Context::Shared ctx) {
         Booking booking;
-        if (ctx.BindQuery(booking)) {
-            ctx.JSON(200, {{"message", "Booking successful (GET)"},
-                           {"name", booking.name},
-                           {"check_in", booking.check_in}});
+        if (ctx->BindQuery(booking)) {
+            ctx->JSON(200, {{"message", "Booking successful (GET)"},
+                            {"name", booking.name},
+                            {"check_in", booking.check_in}});
         }
     });
 
     // 处理表单提交 - 使用 BindJSON
-    engine.Post("/book", [](gin::Context& ctx) {
+    engine->Post("/book", [](gin::Context::Shared ctx) {
         // 尝试从 JSON 绑定
         nlohmann::json body;
-        if (ctx.ContentType() == "application/json") {
+        if (ctx->ContentType() == "application/json") {
             Booking booking;
-            if (ctx.BindJSON(booking)) {
-                ctx.JSON(200, {{"message", "Booking successful (JSON)"},
-                               {"name", booking.name},
-                               {"check_in", booking.check_in}});
+            if (ctx->BindJSON(booking)) {
+                ctx->JSON(200, {{"message", "Booking successful (JSON)"},
+                                {"name", booking.name},
+                                {"check_in", booking.check_in}});
             }
         } else {
             // 从表单绑定
             Booking booking;
-            booking.name = ctx.PostForm("name");
-            booking.check_in = ctx.PostForm("check_in");
-            booking.check_out = ctx.PostForm("check_out");
+            booking.name = ctx->PostForm("name");
+            booking.check_in = ctx->PostForm("check_in");
+            booking.check_out = ctx->PostForm("check_out");
 
             if (booking.name.empty() || booking.check_in.empty()) {
-                ctx.JSON(400, {{"error", "Name and check_in are required"}});
+                ctx->JSON(400, {{"error", "Name and check_in are required"}});
                 return;
             }
 
-            ctx.JSON(200, {{"message", "Booking successful (Form)"},
-                           {"name", booking.name},
-                           {"check_in", booking.check_in},
-                           {"check_out", booking.check_out}});
+            ctx->JSON(200, {{"message", "Booking successful (Form)"},
+                            {"name", booking.name},
+                            {"check_in", booking.check_in},
+                            {"check_out", booking.check_out}});
         }
     });
 
@@ -88,7 +88,7 @@ int main() {
     std::cout
         << R"(  curl -H 'Content-Type: application/json' -d '{"name":"John","check_in":"2025-01-01"}' http://127.0.0.1:8080/book)"
         << std::endl;
-    engine.Run(8080);
+    engine->Run(8080);
 
     return 0;
 }
