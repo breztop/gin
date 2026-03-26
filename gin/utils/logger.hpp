@@ -1,9 +1,10 @@
 #pragma once
 
-#include <spdlog/spdlog.h>
-#include <spdlog/sinks/stdout_color_sinks.h>
-#include <spdlog/sinks/rotating_file_sink.h>
 #include <spdlog/fmt/fmt.h>
+#include <spdlog/sinks/rotating_file_sink.h>
+#include <spdlog/sinks/stdout_color_sinks.h>
+#include <spdlog/spdlog.h>
+
 #include <iostream>
 #include <memory>
 #include <string>
@@ -22,8 +23,10 @@ public:
         return instance;
     }
 
-    void Init(std::string_view name = "gin", std::string_view level = "info",
-              std::string_view log_file = "", bool console = true) {
+    std::shared_ptr<spdlog::logger> logger() const { return logger_; }
+
+    void Init(std::string_view name = "gin", std::string_view level = "info", std::string_view log_file = "",
+              bool console = true) {
         if (initialized_) {
             return;
         }
@@ -34,15 +37,15 @@ public:
 
         if (console) {
             auto console_sink = std::make_shared<spdlog::sinks::stdout_color_sink_mt>();
-            console_sink->set_pattern("[%H:%M:%S.%e] [%^%l%$] [%n] [%g:%#] %v");
+            console_sink->set_pattern("[%H:%M:%S.%e] [%^%l%$] [%n] [%s:%#] %v");
             sinks.push_back(console_sink);
         }
 
         if (!log_file.empty()) {
             try {
-                auto file_sink = std::make_shared<spdlog::sinks::rotating_file_sink_mt>(
-                    std::string(log_file), 1024 * 1024 * 10, 3);
-                file_sink->set_pattern("[%H:%M:%S.%e] [%l] [%n] [%g:%#] %v");
+                auto file_sink =
+                    std::make_shared<spdlog::sinks::rotating_file_sink_mt>(std::string(log_file), 1024 * 1024 * 10, 3);
+                file_sink->set_pattern("[%H:%M:%S.%e] [%^%l%$] [%n] [%s:%#] %v");
                 sinks.push_back(file_sink);
             } catch (const spdlog::spdlog_ex& ex) {
                 std::cerr << "Failed to create file sink: " << ex.what() << std::endl;
@@ -79,90 +82,6 @@ public:
         }
     }
 
-    void Trace(std::string_view msg) {
-        if (logger_) {
-            logger_->trace("{}", msg);
-        }
-    }
-
-    void Debug(std::string_view msg) {
-        if (logger_) {
-            logger_->debug("{}", msg);
-        }
-    }
-
-    void Info(std::string_view msg) {
-        if (logger_) {
-            logger_->info("{}", msg);
-        }
-    }
-
-    void Warn(std::string_view msg) {
-        if (logger_) {
-            logger_->warn("{}", msg);
-        }
-    }
-
-    void Error(std::string_view msg) {
-        if (logger_) {
-            logger_->error("{}", msg);
-        }
-    }
-
-    void Critical(std::string_view msg) {
-        if (logger_) {
-            logger_->critical("{}", msg);
-        }
-    }
-
-    template <typename... Args>
-    void Trace(std::string_view fmt, Args&&... args) {
-        if (logger_) {
-            logger_->trace(fmt::runtime(fmt), std::forward<Args>(args)...);
-        }
-    }
-
-    template <typename... Args>
-    void Debug(std::string_view fmt, Args&&... args) {
-        if (logger_) {
-            logger_->debug(fmt::runtime(fmt), std::forward<Args>(args)...);
-        }
-    }
-
-    template <typename... Args>
-    void Info(std::string_view fmt, Args&&... args) {
-        if (logger_) {
-            logger_->info(fmt::runtime(fmt), std::forward<Args>(args)...);
-        }
-    }
-
-    template <typename... Args>
-    void Warn(std::string_view fmt, Args&&... args) {
-        if (logger_) {
-            logger_->warn(fmt::runtime(fmt), std::forward<Args>(args)...);
-        }
-    }
-
-    template <typename... Args>
-    void Error(std::string_view fmt, Args&&... args) {
-        if (logger_) {
-            logger_->error(fmt::runtime(fmt), std::forward<Args>(args)...);
-        }
-    }
-
-    template <typename... Args>
-    void Critical(std::string_view fmt, Args&&... args) {
-        if (logger_) {
-            logger_->critical(fmt::runtime(fmt), std::forward<Args>(args)...);
-        }
-    }
-
-    void Flush() {
-        if (logger_) {
-            logger_->flush();
-        }
-    }
-
 private:
     Logger() : initialized_(false) {}
     ~Logger() = default;
@@ -174,11 +93,12 @@ private:
     std::string name_;
 };
 
-#define LOG_TRACE(...) ::gin::Logger::Instance().Trace(__VA_ARGS__)
-#define LOG_DEBUG(...) ::gin::Logger::Instance().Debug(__VA_ARGS__)
-#define LOG_INFO(...) ::gin::Logger::Instance().Info(__VA_ARGS__)
-#define LOG_WARN(...) ::gin::Logger::Instance().Warn(__VA_ARGS__)
-#define LOG_ERROR(...) ::gin::Logger::Instance().Error(__VA_ARGS__)
-#define LOG_CRITICAL(...) ::gin::Logger::Instance().Critical(__VA_ARGS__)
+#define LOG_TRACE(...) SPDLOG_LOGGER_TRACE(Logger::Instance().logger(), __VA_ARGS__)
+#define LOG_DEBUG(...) SPDLOG_LOGGER_DEBUG(Logger::Instance().logger(), __VA_ARGS__)
+#define LOG_INFO(...) SPDLOG_LOGGER_INFO(Logger::Instance().logger(), __VA_ARGS__)
+#define LOG_WARN(...) SPDLOG_LOGGER_WARN(Logger::Instance().logger(), __VA_ARGS__)
+#define LOG_ERROR(...) SPDLOG_LOGGER_ERROR(Logger::Instance().logger(), __VA_ARGS__)
+#define LOG_CRITICAL(...) SPDLOG_LOGGER_CRITICAL(Logger::Instance().logger(), __VA_ARGS__)
+
 
 }  // namespace gin
